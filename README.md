@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="docs/banner.svg" width="430" alt="dotExpc">
-</p>
+<img src="docs/banner.svg" width="430" alt="dotExpc">
 
 一个聚合了你所有快递和出库码的APP
 

@@ -77,7 +77,7 @@ class HitokotoStore(context: Context) {
         return try {
             connection.connectTimeout = 8_000
             connection.readTimeout = 8_000
-            connection.setRequestProperty("User-Agent", "dotExpc/0.9.0")
+            connection.setRequestProperty("User-Agent", "dotExpc/1.0.0")
             if (connection.responseCode != 200) return null
             val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
             val json = JSONObject(body)
