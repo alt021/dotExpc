@@ -24,19 +24,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dotexpc.app.data.Platform
 import com.dotexpc.app.web.PlatformSession
+import com.dotexpc.app.web.openPddIdentity
 import top.yukonga.miuix.kmp.basic.Button
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.ExpandLess
-import top.yukonga.miuix.kmp.icon.extended.ExpandMore
-import top.yukonga.miuix.kmp.icon.extended.Refresh
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val ContentHeight = 330.dp
@@ -53,10 +52,13 @@ fun IdentityCard(
     expanded: Boolean,
     onToggle: () -> Unit,
     onLogin: () -> Unit,
+    onFullscreen: () -> Unit,
+    officialApp: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val state = session.state
     val colors = MiuixTheme.colorScheme
+    val context = LocalContext.current
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -77,16 +79,28 @@ fun IdentityCard(
                 style = MiuixTheme.textStyles.main,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = { session.refresh() }) {
-                Icon(
-                    imageVector = MiuixIcons.Refresh,
-                    contentDescription = "刷新",
-                    tint = colors.onSurface,
-                )
+            if (!officialApp) {
+                IconButton(onClick = { session.refresh() }) {
+                    Icon(
+                        imageVector = AppIcons.Refresh,
+                        contentDescription = "刷新",
+                        tint = colors.onSurface,
+                    )
+                }
+                // 只有身份码已经出现才提供全屏，避免打开空白横屏页。
+                if (state.bound && state.identityReady && !state.isLoginRequired) {
+                    IconButton(onClick = onFullscreen) {
+                        Icon(
+                            imageVector = AppIcons.FullScreen,
+                            contentDescription = "全屏显示",
+                            tint = colors.onSurface,
+                        )
+                    }
+                }
             }
             IconButton(onClick = onToggle) {
                 Icon(
-                    imageVector = if (expanded) MiuixIcons.ExpandLess else MiuixIcons.ExpandMore,
+                    imageVector = if (expanded) AppIcons.ExpandLess else AppIcons.ExpandMore,
                     contentDescription = if (expanded) "收起" else "展开",
                     tint = colors.onSurfaceVariantSummary,
                 )
@@ -113,36 +127,55 @@ fun IdentityCard(
                         .clip(ContentShape)
                         .background(Color.White),
                 ) {
-                    SessionWeb(
-                        session = session,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-
-                    if (!state.bound && state.isLoading) {
+                    if (officialApp) {
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                text = "正在加载官方页面…",
-                                style = MiuixTheme.textStyles.footnote1,
-                                color = colors.onSurfaceVariantSummary,
+                            Button(
+                                onClick = { openPddIdentity(context) },
+                                colors = ButtonDefaults.buttonColors(
+                                    color = Color(0xFFF0F0F0),
+                                    contentColor = Color(0xFF666666),
+                                ),
+                            ) {
+                                Text(text = "点此前往拼多多")
+                            }
+                        }
+                    } else {
+                        SessionWeb(
+                            session = session,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+
+                        if (!state.bound && state.isLoading) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "正在加载官方页面…",
+                                    style = MiuixTheme.textStyles.footnote1,
+                                    color = colors.onSurfaceVariantSummary,
+                                )
+                            }
+                        }
+
+                        when {
+                            state.phase == "error" -> CardCover(
+                                title = "页面没有加载成功",
+                                action = "重试",
+                                onAction = { session.refresh() },
+                            )
+
+                            state.isLoginRequired -> CardCover(
+                                title = "登录${platform.title}后显示",
+                                action = "去登录",
+                                onAction = onLogin,
                             )
                         }
-                    }
-
-                    when {
-                        state.phase == "error" -> CardCover(
-                            title = "页面没有加载成功",
-                            action = "重试",
-                            onAction = { session.refresh() },
-                        )
-
-                        state.isLoginRequired -> CardCover(
-                            title = "登录${platform.title}后显示",
-                            action = "去登录",
-                            onAction = onLogin,
-                        )
                     }
                 }
             }

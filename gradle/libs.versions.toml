@@ -28,15 +28,21 @@ miuix = "0.9.4"
 # --- 液态玻璃：Kyant0/AndroidLiquidGlass（Apache 2.0），2.0.1 依赖 compose 1.12.0，与 BOM 对齐 ---
 backdrop = "2.0.1"
 
+# Material 图标：图标资源是独立冻结的制品，最后由 BOM 之外的 1.7.8 提供
+materialIcons = "1.7.8"
+
 # --- AndroidX ---
 activityCompose = "1.13.0"
 coreKtx = "1.19.1"
 lifecycle = "2.11.0"
+# 外部链接用 Custom Tabs 打开：支持应用内浏览的浏览器（Chrome/Firefox/Edge 等）
+browser = "1.10.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 
 # 版本由 compose-bom 统一管理，此处刻意不写 version
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -46,6 +52,8 @@ compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
 compose-animation = { group = "androidx.compose.animation", name = "animation" }
+# 全量 Material Design 图标，R8 只保留实际用到的矢量
+compose-material-icons = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIcons" }
 
 # Miuix：纯 Android 工程直接用 miuix-ui，Gradle 会自动选 android 变体
 miuix-ui = { group = "top.yukonga.miuix.kmp", name = "miuix-ui", version.ref = "miuix" }

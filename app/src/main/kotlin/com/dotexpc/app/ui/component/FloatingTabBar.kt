@@ -100,10 +100,10 @@ enum class AppTab(
     val filledIcon: ImageVector,
     val outlineIcon: ImageVector,
 ) {
-    HOME("主页", TabIcons.HomeFilled, TabIcons.HomeOutline),
-    PICKUP("取件码", TabIcons.TagFilled, TabIcons.TagOutline),
-    IDENTITY("身份码", TabIcons.CodeFilled, TabIcons.CodeOutline),
-    OPTIONS("选项", TabIcons.SettingsFilled, TabIcons.SettingsOutline),
+    HOME("主页", AppIcons.HomeFilled, AppIcons.HomeOutline),
+    PICKUP("取件码", AppIcons.PickupFilled, AppIcons.PickupOutline),
+    IDENTITY("身份码", AppIcons.IdentityFilled, AppIcons.IdentityOutline),
+    OPTIONS("选项", AppIcons.SettingsFilled, AppIcons.SettingsOutline),
 }
 
 /**

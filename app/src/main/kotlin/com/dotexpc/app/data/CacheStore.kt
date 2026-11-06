@@ -7,19 +7,26 @@ import java.util.Locale
 /**
  * WebView 与临时目录的磁盘缓存。
  *
- * 只统计和删除 HTTP/代码/GPU 缓存以及 Service Worker 的资源缓存，
- * Cookie、Local Storage、IndexedDB 与数据库一概不碰，清理后不需要重新登录。
+ * WebView 内核版本不同，HTTP 缓存目录名也不一样（旧版 `HTTP Cache`，新版 `Cache`），
+ * 所以按目录名在整个 app_webview 树里识别，避免漏算导致清理阈值永远不触发。
+ * 只删除缓存目录，Cookie、Local Storage、IndexedDB 一概不碰，清理后不需要重新登录。
  */
 object CacheStore {
 
-    private val WEBVIEW_CACHE_PATHS = listOf(
-        "Default/HTTP Cache",
-        "Default/Code Cache",
-        "Default/GPUCache",
-        "Default/ShaderCache",
-        "Default/Application Cache",
-        "Default/Service Worker/CacheStorage",
-        "Default/Service Worker/ScriptCache",
+    private val CACHE_DIR_NAMES = setOf(
+        "Cache",
+        "HTTP Cache",
+        "Code Cache",
+        "GPUCache",
+        "ShaderCache",
+        "GrShaderCache",
+        "DawnCache",
+        "DawnGraphiteCache",
+        "DawnWebGPUCache",
+        "GraphiteDawnCache",
+        "Application Cache",
+        "CacheStorage",
+        "ScriptCache",
     )
 
     fun size(context: Context): Long =
@@ -29,7 +36,7 @@ object CacheStore {
         val before = size(context)
         webViewCacheDirs(context).forEach { it.deleteRecursively() }
         context.cacheDir.listFiles()?.forEach { it.deleteRecursively() }
-        return before - size(context)
+        return (before - size(context)).coerceAtLeast(0L)
     }
 
     fun format(bytes: Long): String = when {
@@ -41,7 +48,17 @@ object CacheStore {
 
     private fun webViewCacheDirs(context: Context): List<File> {
         val root = File(context.applicationInfo.dataDir, "app_webview")
-        return WEBVIEW_CACHE_PATHS.map { File(root, it) }
+        if (!root.isDirectory) return emptyList()
+        val dirs = ArrayList<File>()
+        fun collect(dir: File) {
+            dir.listFiles()?.forEach { child ->
+                if (!child.isDirectory) return@forEach
+                // 命中缓存目录就不再向下找，避免把内部的同名子目录重复统计。
+                if (child.name in CACHE_DIR_NAMES) dirs.add(child) else collect(child)
+            }
+        }
+        collect(root)
+        return dirs
     }
 
     private fun File.sizeRecursively(): Long =

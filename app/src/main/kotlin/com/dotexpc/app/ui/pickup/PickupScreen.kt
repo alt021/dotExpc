@@ -55,6 +55,7 @@ import com.dotexpc.app.data.PickupCode
 import com.dotexpc.app.data.PickupStore
 import com.dotexpc.app.data.Platform
 import kotlinx.coroutines.delay
+import com.dotexpc.app.ui.component.AppIcons
 import com.dotexpc.app.ui.component.ClickAnchoredPositionProvider
 import com.dotexpc.app.ui.component.trackPressX
 import top.yukonga.miuix.kmp.basic.Button
@@ -71,11 +72,6 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Delete
-import top.yukonga.miuix.kmp.icon.extended.Edit
-import top.yukonga.miuix.kmp.icon.extended.Ok
-import top.yukonga.miuix.kmp.icon.extended.Undo
 import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.overlay.OverlayListPopup
@@ -478,21 +474,21 @@ private fun PickupRow(
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 IconButton(onClick = onEdit, minWidth = 36.dp, minHeight = 36.dp) {
                     Icon(
-                        imageVector = MiuixIcons.Edit,
+                        imageVector = AppIcons.Edit,
                         contentDescription = "编辑",
                         tint = actionTint,
                     )
                 }
                 IconButton(onClick = onTogglePicked, minWidth = 36.dp, minHeight = 36.dp) {
                     Icon(
-                        imageVector = if (item.picked) MiuixIcons.Undo else MiuixIcons.Ok,
+                        imageVector = if (item.picked) AppIcons.Undo else AppIcons.Check,
                         contentDescription = if (item.picked) "标记为未取" else "标记为已取",
                         tint = actionTint,
                     )
                 }
                 IconButton(onClick = onDelete, minWidth = 36.dp, minHeight = 36.dp) {
                     Icon(
-                        imageVector = MiuixIcons.Delete,
+                        imageVector = AppIcons.Delete,
                         contentDescription = "删除",
                         tint = actionTint,
                     )
@@ -508,9 +504,9 @@ private fun remainingLabel(remaining: Long): String {
     val hour = 60 * minute
     val day = 24 * hour
     return when {
-        remaining >= day -> "还剩 ${remaining / day} 天 ${(remaining % day) / hour} 小时后自动删除"
-        remaining >= hour -> "还剩 ${remaining / hour} 小时后自动删除"
-        else -> "还剩 ${(remaining / minute).coerceAtLeast(1)} 分钟后自动删除"
+        remaining >= day -> "将在${remaining / day}天${(remaining % day) / hour}小时后自动删除"
+        remaining >= hour -> "将在${remaining / hour}小时后自动删除"
+        else -> "将在${(remaining / minute).coerceAtLeast(1)}分钟后自动删除"
     }
 }
 

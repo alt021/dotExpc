@@ -25,6 +25,8 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 fun IdentityScreen(
     sessions: AppSessions,
     onLogin: (Platform) -> Unit,
+    onFullscreen: (Platform) -> Unit,
+    pddOfficialMode: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var taobaoExpanded by rememberSaveable { mutableStateOf(true) }
@@ -63,6 +65,9 @@ fun IdentityScreen(
                         }
                     },
                     onLogin = { onLogin(platform) },
+                    onFullscreen = { onFullscreen(platform) },
+                    // 拼多多选择「打开官方应用」后，卡片不再加载官方身份码页面。
+                    officialApp = pddOfficialMode && platform == Platform.PDD,
                 )
             }
         }

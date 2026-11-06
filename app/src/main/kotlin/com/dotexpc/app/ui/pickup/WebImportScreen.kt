@@ -34,6 +34,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.doOnLayout
 import com.dotexpc.app.data.PickupStore
 import com.dotexpc.app.data.Platform
+import com.dotexpc.app.ui.component.AppIcons
 import com.dotexpc.app.ui.component.SessionWeb
 import com.dotexpc.app.web.PlatformSession
 import com.dotexpc.app.web.UrlPolicy
@@ -45,8 +46,6 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -242,7 +241,7 @@ fun WebImportScreen(
                 // 站内跳转（如搜索、身份码）是同窗口打开的，先退历史再退出页面。
                 IconButton(onClick = { goBack() }) {
                     Icon(
-                        imageVector = MiuixIcons.Back,
+                        imageVector = AppIcons.Back,
                         contentDescription = "返回",
                     )
                 }

@@ -9,6 +9,10 @@ object UrlPolicy {
     const val PDD_ENTRY = "https://m.pinduoduo.net/mdkd/package?tab=ID_CODE"
     const val PDD_IDENTITY_APP_LINK =
         "pinduoduo://com.xunmeng.pinduoduo/mdkd/package?tab=ID_CODE"
+    /** 官方 App 的「取快递」页（待取包裹 tab）。 */
+    const val PDD_PACKAGE_APP_LINK =
+        "pinduoduo://com.xunmeng.pinduoduo/mdkd/package?tab=PACKAGE"
+    const val PDD_PACKAGE_WEB = "https://m.pinduoduo.net/mdkd/package?tab=PACKAGE"
 
     const val TAOBAO_IDENTITY_ENTRY =
         "https://pages-fast.m.taobao.com/wow/z/uniapp/1011717/last-mile-fe/end-collect-platform/identity-code"

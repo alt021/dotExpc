@@ -11,14 +11,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dotexpc.app.ui.component.AppIcons
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 开发者选项：连续点击关于页署名 5 次进入，不对外暴露。 */
@@ -26,6 +25,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun DeveloperScreen(
     onClose: () -> Unit,
     onReopenTerms: () -> Unit,
+    onResetPddNotice: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -37,7 +37,7 @@ fun DeveloperScreen(
             title = "开发者选项",
             navigationIcon = {
                 IconButton(onClick = onClose) {
-                    Icon(imageVector = MiuixIcons.Back, contentDescription = "返回")
+                    Icon(imageVector = AppIcons.Back, contentDescription = "返回")
                 }
             },
         )
@@ -58,6 +58,10 @@ fun DeveloperScreen(
                 BasicComponent(
                     title = "重新打开使用须知",
                     onClick = onReopenTerms,
+                )
+                BasicComponent(
+                    title = "重置拼多多登录提示",
+                    onClick = onResetPddNotice,
                 )
             }
         }

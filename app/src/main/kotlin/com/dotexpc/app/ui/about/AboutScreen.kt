@@ -34,11 +34,11 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import com.dotexpc.app.web.openExternalLink
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.drawBackdrop
@@ -49,11 +49,10 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.isRenderEffectSupported
 import com.kyant.backdrop.shadow.Shadow as GlassShadow
 import kotlinx.coroutines.launch
+import com.dotexpc.app.ui.component.AppIcons
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private const val RELEASES_URL = "https://github.com/alt021/dotExpc/releases"
@@ -66,7 +65,6 @@ fun AboutScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val uriHandler = LocalUriHandler.current
     val versionName = remember(context) {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
     }
@@ -123,7 +121,7 @@ fun AboutScreen(
                 LiquidButton(
                     backdrop = backdrop,
                     blurEnabled = blurEnabled,
-                    onClick = { uriHandler.openUri(RELEASES_URL) },
+                    onClick = { openExternalLink(context, RELEASES_URL) },
                 ) {
                     Text(
                         text = "检查更新",
@@ -161,7 +159,7 @@ fun AboutScreen(
                     .padding(12.dp),
             ) {
                 Icon(
-                    imageVector = MiuixIcons.Back,
+                    imageVector = AppIcons.Back,
                     contentDescription = "返回",
                     tint = MiuixTheme.colorScheme.onBackground,
                 )

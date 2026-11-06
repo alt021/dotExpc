@@ -43,11 +43,30 @@
     '#hc-pdd-shell .hc-pdd-value,#hc-pdd-shell .hc-pdd-warning,#hc-pdd-shell .hc-pdd-tips{width:100%!important;text-align:center!important}'
   ].join('\n');
 
+  // 全屏子页：WebView 被摆成横屏尺寸并整体旋转，这里只负责去掉页面留白、
+  // 让条形码吃满可用高度。
+  var TAOBAO_FULLSCREEN = [
+    'html.dexp-fullscreen,html.dexp-fullscreen body{height:100%!important;overflow:hidden!important}',
+    'html.dexp-fullscreen body#handycode-merged{padding:0!important}',
+    'html.dexp-fullscreen body#handycode-merged > section:first-of-type{display:flex!important;flex-direction:column!important;height:100%!important}',
+    'html.dexp-fullscreen body#handycode-merged > section:first-of-type > .hc-content{flex:1 1 auto!important;padding:0 8px!important}',
+    'html.dexp-fullscreen #identity-content{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important}'
+  ].join('\n');
+
+  var PDD_FULLSCREEN = [
+    'html.dexp-fullscreen #hc-pdd-shell .hc-pdd-barcode{width:92%!important;height:auto!important;max-height:60vh!important;margin:0 auto!important;object-fit:contain!important}',
+    'html.dexp-fullscreen #hc-pdd-shell .hc-pdd-code{gap:14px!important}',
+    'html.dexp-fullscreen #hc-pdd-shell .hc-pdd-phone{font-size:16px!important}',
+    'html.dexp-fullscreen #hc-pdd-shell .hc-pdd-value{font-size:15px!important}'
+  ].join('\n');
+
   function injectStyle() {
     if (!document.head || document.getElementById(STYLE_ID)) return;
     var style = document.createElement('style');
     style.id = STYLE_ID;
-    style.textContent = window.DEXP_PLATFORM === 'pdd' ? PDD_CSS : TAOBAO_CSS;
+    style.textContent = window.DEXP_PLATFORM === 'pdd'
+      ? PDD_CSS + '\n' + PDD_FULLSCREEN
+      : TAOBAO_CSS + '\n' + TAOBAO_FULLSCREEN;
     document.head.appendChild(style);
   }
 
@@ -98,6 +117,19 @@
 
   window.DexpMode = {
     apply: injectStyle,
+    // 全屏开关：只切换 CSS 类；淘宝的条形码尺寸由投影脚本生成，需要重投影一次。
+    fullscreen: function (on) {
+      var active = !!on;
+      var root = document.documentElement;
+      if (!root) return false;
+      root.classList.toggle('dexp-fullscreen', active);
+      try {
+        // 淘宝条形码尺寸由投影脚本写入内联样式，进出全屏都要按当前视口重建。
+        if (typeof window.HandyCodeProject === 'function') window.HandyCodeProject();
+        window.scrollTo(0, 0);
+      } catch (error) { /* 页面切换瞬间忽略 */ }
+      return active;
+    },
     // 返回 true 表示页面内的刷新控件已接管；false 交给原生层 reload。
     refresh: function () {
       var selector = window.DEXP_PLATFORM === 'pdd'

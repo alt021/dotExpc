@@ -42,8 +42,7 @@ import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.basic.FloatingActionButton
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Add
+import com.dotexpc.app.ui.component.AppIcons
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val MenuWidth = 200.dp
@@ -72,7 +71,8 @@ fun AddFabMenu(
     onExpandedChange: (Boolean) -> Unit,
     onManualAdd: () -> Unit,
     onImportTaobao: () -> Unit,
-    onImportPdd: () -> Unit,
+    pddActionLabel: String,
+    onPddAction: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val colors = MiuixTheme.colorScheme
@@ -82,11 +82,12 @@ fun AddFabMenu(
         animationSpec = spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMediumLow),
         label = "fabIcon",
     )
-    val actions = listOf(
-        "手动添加" to onManualAdd,
-        "从菜鸟导入" to onImportTaobao,
-        "从多多导入" to onImportPdd,
-    )
+    val actions = buildList {
+        add("手动添加" to onManualAdd)
+        add("从菜鸟导入" to onImportTaobao)
+        // 官方应用模式下这一项改为直接打开拼多多的取件码页面。
+        onPddAction?.let { add(pddActionLabel to it) }
+    }
 
     Column(
         modifier = modifier,
@@ -145,7 +146,7 @@ fun AddFabMenu(
             shadowElevation = 0.dp,
         ) {
             Icon(
-                imageVector = MiuixIcons.Add,
+                imageVector = AppIcons.Add,
                 contentDescription = if (expanded) "关闭" else "添加取件码",
                 tint = colors.onPrimary,
                 modifier = Modifier

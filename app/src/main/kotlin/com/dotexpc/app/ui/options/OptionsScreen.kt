@@ -1,5 +1,6 @@
 package com.dotexpc.app.ui.options
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,11 +29,14 @@ import androidx.compose.ui.unit.dp
 import com.dotexpc.app.data.AppSessions
 import com.dotexpc.app.data.AppSettings
 import com.dotexpc.app.data.CacheStore
+import com.dotexpc.app.data.HitokotoStore
+import com.dotexpc.app.data.HomeBackground
+import com.dotexpc.app.data.PddAccessMode
 import com.dotexpc.app.data.Platform
 import com.dotexpc.app.data.TabIconStyle
 import com.dotexpc.app.data.ThemeMode
+import com.dotexpc.app.ui.component.AppIcons
 import com.dotexpc.app.ui.component.ClickAnchoredPositionProvider
-import com.dotexpc.app.ui.component.TabIcons
 import com.dotexpc.app.ui.component.trackPressX
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Button
@@ -41,8 +44,9 @@ import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.DropdownImpl
 import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.ListPopupColumn
-import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Switch
 import top.yukonga.miuix.kmp.basic.Text
@@ -51,8 +55,6 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.ChevronForward
 import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.overlay.OverlayListPopup
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -62,21 +64,31 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun OptionsScreen(
     settings: AppSettings,
     sessions: AppSessions,
+    hitokoto: HitokotoStore,
     onLogin: (Platform) -> Unit,
     onOpenAbout: () -> Unit,
     onOpenLicenses: () -> Unit,
+    scrollState: ScrollState,
+    scrollBehavior: ScrollBehavior,
     modifier: Modifier = Modifier,
 ) {
     val colors = MiuixTheme.colorScheme
-    val scrollBehavior = MiuixScrollBehavior()
     var showThemeMenu by remember { mutableStateOf(false) }
     var showIconMenu by remember { mutableStateOf(false) }
+    var showBackgroundMenu by remember { mutableStateOf(false) }
+    var showPddMenu by remember { mutableStateOf(false) }
+    var showRefreshHitokoto by remember { mutableStateOf(false) }
     var unbindTarget by remember { mutableStateOf<Platform?>(null) }
     var showUnbind by remember { mutableStateOf(false) }
     val themeTapX = remember { mutableFloatStateOf(0f) }
     val iconTapX = remember { mutableFloatStateOf(0f) }
+    val backgroundTapX = remember { mutableFloatStateOf(0f) }
+    val pddTapX = remember { mutableFloatStateOf(0f) }
     val themeAnchor = remember { ClickAnchoredPositionProvider(themeTapX) }
     val iconAnchor = remember { ClickAnchoredPositionProvider(iconTapX) }
+    val backgroundAnchor = remember { ClickAnchoredPositionProvider(backgroundTapX) }
+    val pddAnchor = remember { ClickAnchoredPositionProvider(pddTapX) }
+    val pddInAppLogin = settings.pddAccessMode == PddAccessMode.InApp
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var cacheSize by remember { mutableStateOf<Long?>(null) }
@@ -93,7 +105,7 @@ fun OptionsScreen(
                 .fillMaxWidth()
                 .weight(1f)
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(top = 8.dp, bottom = 100.dp),
         ) {
             SmallTitle("账户")
@@ -103,23 +115,64 @@ fun OptionsScreen(
                     .padding(horizontal = 16.dp),
             ) {
                 Platform.entries.forEach { platform ->
-                    AccountRow(
-                        platform = platform,
-                        icon = when (platform) {
-                            Platform.PDD -> TabIcons.Pdd
-                            Platform.TAOBAO -> if (settings.tabIconStyle == TabIconStyle.Filled) {
-                                TabIcons.TaobaoFilled
+                    val row: @Composable () -> Unit = {
+                        AccountRow(
+                            platform = platform,
+                            icon = when (platform) {
+                                Platform.PDD -> AppIcons.Pdd
+                                Platform.TAOBAO -> if (settings.tabIconStyle == TabIconStyle.Filled) {
+                                    AppIcons.TaobaoFilled
+                                } else {
+                                    AppIcons.TaobaoOutline
+                                }
+                            },
+                            bound = sessions.get(platform).state.bound,
+                            inAppLogin = platform != Platform.PDD || pddInAppLogin,
+                            onBind = { onLogin(platform) },
+                            onUnbind = {
+                                unbindTarget = platform
+                                showUnbind = true
+                            },
+                            onConfigure = if (platform == Platform.PDD) {
+                                { showPddMenu = true }
                             } else {
-                                TabIcons.TaobaoOutline
+                                null
+                            },
+                        )
+                    }
+                    if (platform == Platform.PDD) {
+                        // 弹层锚点必须和触发它的行在同一个布局节点里。
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .trackPressX(pddTapX),
+                        ) {
+                            row()
+                            OverlayListPopup(
+                                show = showPddMenu,
+                                popupPositionProvider = pddAnchor,
+                                onDismissRequest = { showPddMenu = false },
+                            ) {
+                                ListPopupColumn {
+                                    PddAccessMode.entries.forEachIndexed { index, mode ->
+                                        DropdownImpl(
+                                            text = mode.label,
+                                            optionSize = PddAccessMode.entries.size,
+                                            isSelected = mode == settings.pddAccessMode,
+                                            index = index,
+                                            onSelectedIndexChange = {
+                                                // 只切换入口，不动应用内会话，切回来仍是登录态。
+                                                settings.selectPddAccessMode(mode)
+                                                showPddMenu = false
+                                            },
+                                        )
+                                    }
+                                }
                             }
-                        },
-                        bound = sessions.get(platform).state.bound,
-                        onBind = { onLogin(platform) },
-                        onUnbind = {
-                            unbindTarget = platform
-                            showUnbind = true
-                        },
-                    )
+                        }
+                    } else {
+                        row()
+                    }
                 }
             }
 
@@ -138,7 +191,7 @@ fun OptionsScreen(
                     OptionRow(
                         title = "主题",
                         summary = settings.themeMode.label,
-                        icon = TabIcons.Theme,
+                        icon = AppIcons.Theme,
                         onClick = { showThemeMenu = true },
                     )
                     OverlayListPopup(
@@ -172,9 +225,9 @@ fun OptionsScreen(
                         title = "应用内图标样式",
                         summary = settings.tabIconStyle.label,
                         icon = if (settings.tabIconStyle == TabIconStyle.Filled) {
-                            TabIcons.StyleFilled
+                            AppIcons.StyleFilled
                         } else {
-                            TabIcons.StyleOutline
+                            AppIcons.StyleOutline
                         },
                         onClick = { showIconMenu = true },
                     )
@@ -200,10 +253,78 @@ fun OptionsScreen(
                     }
                 }
 
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .trackPressX(backgroundTapX),
+                ) {
+                    OptionRow(
+                        title = "主页背景",
+                        summary = settings.homeBackground.label,
+                        icon = if (settings.tabIconStyle == TabIconStyle.Filled) {
+                            AppIcons.BackgroundFilled
+                        } else {
+                            AppIcons.BackgroundOutline
+                        },
+                        onClick = { showBackgroundMenu = true },
+                    )
+                    OverlayListPopup(
+                        show = showBackgroundMenu,
+                        popupPositionProvider = backgroundAnchor,
+                        onDismissRequest = { showBackgroundMenu = false },
+                    ) {
+                        ListPopupColumn {
+                            HomeBackground.entries.forEachIndexed { index, background ->
+                                DropdownImpl(
+                                    text = background.label,
+                                    optionSize = HomeBackground.entries.size,
+                                    isSelected = background == settings.homeBackground,
+                                    index = index,
+                                    onSelectedIndexChange = {
+                                        settings.selectHomeBackground(background)
+                                        showBackgroundMenu = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+
+                OptionRow(
+                    title = "主页一言",
+                    summary = "在主页显示每日一言",
+                    icon = if (settings.tabIconStyle == TabIconStyle.Filled) {
+                        AppIcons.QuoteFilled
+                    } else {
+                        AppIcons.QuoteOutline
+                    },
+                    trailing = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { showRefreshHitokoto = true },
+                                modifier = Modifier.padding(end = 10.dp),
+                                minWidth = 36.dp,
+                                minHeight = 36.dp,
+                            ) {
+                                Icon(
+                                    imageVector = AppIcons.Refresh,
+                                    contentDescription = "刷新一言",
+                                    tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                )
+                            }
+                            Switch(
+                                checked = settings.hitokotoEnabled,
+                                onCheckedChange = { settings.toggleHitokoto() },
+                            )
+                        }
+                    },
+                    onClick = { settings.toggleHitokoto() },
+                )
+
                 OptionRow(
                     title = "液态玻璃底栏",
                     summary = "启用类似 iOS 的液态玻璃底栏",
-                    icon = TabIcons.LiquidGlass,
+                    icon = AppIcons.LiquidGlass,
                     trailing = {
                         Switch(
                             checked = settings.liquidTabBar,
@@ -224,9 +345,9 @@ fun OptionsScreen(
                     title = "清除缓存",
                     summary = cacheSize?.let(CacheStore::format) ?: "…",
                     icon = if (settings.tabIconStyle == TabIconStyle.Filled) {
-                        TabIcons.TrashFilled
+                        AppIcons.TrashFilled
                     } else {
-                        TabIcons.TrashOutline
+                        AppIcons.TrashOutline
                     },
                     onClick = {
                         scope.launch {
@@ -246,15 +367,15 @@ fun OptionsScreen(
                 OptionRow(
                     title = "关于此应用",
                     icon = if (settings.tabIconStyle == TabIconStyle.Filled) {
-                        TabIcons.AboutFilled
+                        AppIcons.AboutFilled
                     } else {
-                        TabIcons.AboutOutline
+                        AppIcons.AboutOutline
                     },
                     onClick = onOpenAbout,
                 )
                 OptionRow(
                     title = "开放源代码许可",
-                    icon = TabIcons.License,
+                    icon = AppIcons.License,
                     onClick = onOpenLicenses,
                 )
             }
@@ -290,6 +411,35 @@ fun OptionsScreen(
                 }
             }
         }
+
+        OverlayDialog(
+            show = showRefreshHitokoto,
+            title = "刷新一言",
+            summary = "为避免请求过多，请慎用刷新功能",
+            onDismissRequest = { showRefreshHitokoto = false },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Button(
+                    onClick = { showRefreshHitokoto = false },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColorsPrimary(),
+                ) {
+                    Text(text = "取消")
+                }
+                Button(
+                    onClick = {
+                        showRefreshHitokoto = false
+                        scope.launch { hitokoto.refreshNow() }
+                    },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(text = "刷新")
+                }
+            }
+        }
     }
 }
 
@@ -299,31 +449,57 @@ private fun AccountRow(
     platform: Platform,
     icon: ImageVector,
     bound: Boolean,
+    inAppLogin: Boolean,
     onBind: () -> Unit,
     onUnbind: () -> Unit,
+    onConfigure: (() -> Unit)? = null,
 ) {
     OptionRow(
         title = platform.title,
-        summary = if (bound) "已绑定" else "未绑定",
+        summary = when {
+            !inAppLogin -> "无需登录"
+            bound -> "已绑定"
+            else -> "未绑定"
+        },
         icon = icon,
         trailing = {
-            TextButton(
-                text = if (bound) "解绑" else "绑定",
-                onClick = if (bound) onUnbind else onBind,
-                minWidth = 0.dp,
-                minHeight = 32.dp,
-                cornerRadius = 16.dp,
-                insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                textStyle = MiuixTheme.textStyles.body2,
-                colors = if (bound) {
-                    ButtonDefaults.textButtonColors(
-                        color = MiuixTheme.colorScheme.error,
-                        textColor = Color.White,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (onConfigure != null) {
+                    IconButton(
+                        onClick = onConfigure,
+                        minWidth = 36.dp,
+                        minHeight = 36.dp,
+                    ) {
+                        Icon(
+                            imageVector = AppIcons.SettingsFilled,
+                            contentDescription = "拼多多登录方式",
+                            tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        )
+                    }
+                }
+                if (inAppLogin) {
+                    TextButton(
+                        text = if (bound) "解绑" else "绑定",
+                        onClick = if (bound) onUnbind else onBind,
+                        minWidth = 0.dp,
+                        minHeight = 32.dp,
+                        cornerRadius = 16.dp,
+                        insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        textStyle = MiuixTheme.textStyles.body2,
+                        colors = if (bound) {
+                            ButtonDefaults.textButtonColors(
+                                color = MiuixTheme.colorScheme.error,
+                                textColor = Color.White,
+                            )
+                        } else {
+                            ButtonDefaults.textButtonColorsPrimary()
+                        },
                     )
-                } else {
-                    ButtonDefaults.textButtonColorsPrimary()
-                },
-            )
+                }
+            }
         },
     )
 }
@@ -353,7 +529,7 @@ private fun OptionRow(
                 trailing()
             } else {
                 Icon(
-                    imageVector = MiuixIcons.ChevronForward,
+                    imageVector = AppIcons.ChevronForward,
                     contentDescription = null,
                     tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                     modifier = Modifier.size(16.dp),

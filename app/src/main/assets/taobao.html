@@ -182,7 +182,9 @@ function project(state){
    Array.from(fresh.querySelectorAll('img')).forEach(function(image){
     var original=links.get(image);
     if(original&&/width-origin--|width-rotate--/.test(original.className||'')){
-     [['display','block'],['width','100%'],['height','82px'],['object-fit','fill'],['transform','none'],['margin','8px 0']].forEach(function(p){image.style.setProperty(p[0],p[1],'important')});
+     // 全屏页把 WebView 转成横屏尺寸，条形码放弃固定 82px 高度，按可用高度放大。
+     var full=document.documentElement.classList.contains('dexp-fullscreen');
+     [['display','block'],['width','100%'],['height',full?'auto':'82px'],['max-height',full?'62vh':'none'],['object-fit',full?'contain':'fill'],['transform','none'],['margin',full?'12px 0':'8px 0']].forEach(function(p){image.style.setProperty(p[0],p[1],'important')});
     }
    });
   }
@@ -254,6 +256,18 @@ document.querySelectorAll('[data-refresh]').forEach(function(button){
  });
 });
 window.HandyCodeRefresh=function(){Object.keys(sources).forEach(function(type){sources[type].controller.refresh()});return true};
+// 全屏切换只改 CSS 类，不触发数据刷新；这里清掉投影缓存强制重建一次，
+// 让条形码按新视口的尺寸重新排版。
+window.HandyCodeProject=function(){
+ Object.keys(sources).forEach(function(type){
+  var state=sources[type];
+  delete state.mount.dataset.ready;
+  state.signature=null;
+  state.visibleSignature=null;
+  queue(state);
+ });
+ return true;
+};
 document.addEventListener('visibilitychange',function(){if(!document.hidden)Object.keys(sources).forEach(function(type){queue(sources[type])})});
 window.addEventListener('pagehide',function(){Object.keys(sources).forEach(function(type){sources[type].controller.dispose()})});
 })();

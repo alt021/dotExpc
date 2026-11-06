@@ -8,14 +8,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dotexpc.app.data.Platform
+import com.dotexpc.app.ui.component.AppIcons
 import com.dotexpc.app.ui.component.SessionWeb
 import com.dotexpc.app.web.PlatformSession
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -40,7 +39,7 @@ fun LoginScreen(
             navigationIcon = {
                 IconButton(onClick = onClose) {
                     Icon(
-                        imageVector = MiuixIcons.Back,
+                        imageVector = AppIcons.Back,
                         contentDescription = "返回",
                     )
                 }

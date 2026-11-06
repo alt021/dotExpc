@@ -11,17 +11,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.dotexpc.app.web.openExternalLink
+import com.dotexpc.app.ui.component.AppIcons
 import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Back
-import top.yukonga.miuix.kmp.icon.extended.ChevronForward
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private const val PROJECT_URL = "https://github.com/alt021/dotExpc"
@@ -43,7 +42,7 @@ fun LicensesScreen(
             title = "开放源代码许可",
             navigationIcon = {
                 IconButton(onClick = onClose) {
-                    Icon(imageVector = MiuixIcons.Back, contentDescription = "返回")
+                    Icon(imageVector = AppIcons.Back, contentDescription = "返回")
                 }
             },
         )
@@ -95,14 +94,14 @@ private fun LicenseRow(
     url: String,
     summary: String = "Apache License 2.0",
 ) {
-    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
     BasicComponent(
         title = title,
         summary = summary,
-        onClick = { runCatching { uriHandler.openUri(url) } },
+        onClick = { openExternalLink(context, url) },
         endActions = {
             Icon(
-                imageVector = MiuixIcons.ChevronForward,
+                imageVector = AppIcons.ChevronForward,
                 contentDescription = null,
                 tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 modifier = Modifier.size(16.dp),
