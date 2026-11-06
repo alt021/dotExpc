@@ -1,0 +1,11 @@
+<resources>
+    <!--
+      Miuix 自带 Compose 主题（MiuixTheme），这里只需要一个不带 ActionBar 的
+      平台主题打好底，避免 Activity 顶部多出一条原生标题栏。
+    -->
+    <style name="Theme.dotExpc" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>

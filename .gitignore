@@ -1,0 +1,30 @@
+# 便携工具链：体积大且可重建（3 GB+），不入库
+toolchain/
+
+# Gradle / Android 构建产物
+.gradle/
+.kotlin/
+build/
+local.properties
+*.apk
+*.aab
+
+# 若不用全局 gradle，下面的目录不应出现（出现说明隔离失效）
+.cxx/
+captures/
+
+# 签名文件
+*.jks
+*.keystore
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 本地界面截图，可能含账号信息，不入库
+build-shots/

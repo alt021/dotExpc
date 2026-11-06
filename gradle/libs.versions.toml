@@ -1,0 +1,65 @@
+[versions]
+# --- 构建链 ---
+# AGP 9.x 是硬性要求：Miuix 全系列（0.9.0~0.9.4）的 AAR 元数据都声明 minCompileSdk=37，
+# 而 AGP 9.0 最高只支持 API 36.1 —— 即必须 AGP ≥ 9.1；这里取 9.4 稳定线最新补丁。
+# AGP 9.4 要求 Gradle ≥ 9.6.0、JDK ≥ 17、SDK Build Tools ≥ 36.0.0。
+agp = "9.4.1"
+
+# AGP 9 内置 Kotlin（自带 KGP 2.2.10）。Miuix 0.9.4 用 2.4.20 编译，
+# 元数据版本高于 2.2.10 会读不了，所以必须在根 build.gradle.kts 的 buildscript 里
+# 把 KGP 顶到 2.4.20 —— 版本目录里的这个值只对 Compose 编译器插件生效。
+kotlin = "2.4.20"
+
+# --- SDK 级别 ---
+# compileSdk 37 由 Miuix 强制要求，无法下调（0.9.0 起全部如此）。
+compileSdk = "37"
+minSdk = "24"
+targetSdk = "37"
+
+# AGP 9.4 的最低/默认 Build Tools 就是 36.0.0，与项目内已装版本一致
+buildTools = "36.0.0"
+
+# --- Compose：Miuix 0.9.4 依赖 compose 1.12.0，BOM 2026.09.00 解析出 1.12.1 ---
+composeBom = "2026.09.00"
+
+# --- Miuix UI ---
+miuix = "0.9.4"
+
+# --- 液态玻璃：Kyant0/AndroidLiquidGlass（Apache 2.0），2.0.1 依赖 compose 1.12.0，与 BOM 对齐 ---
+backdrop = "2.0.1"
+
+# --- AndroidX ---
+activityCompose = "1.13.0"
+coreKtx = "1.19.1"
+lifecycle = "2.11.0"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+
+# 版本由 compose-bom 统一管理，此处刻意不写 version
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+compose-animation = { group = "androidx.compose.animation", name = "animation" }
+
+# Miuix：纯 Android 工程直接用 miuix-ui，Gradle 会自动选 android 变体
+miuix-ui = { group = "top.yukonga.miuix.kmp", name = "miuix-ui", version.ref = "miuix" }
+miuix-icons = { group = "top.yukonga.miuix.kmp", name = "miuix-icons", version.ref = "miuix" }
+# 子页转场与手势返回：KernelSU 同款，带视差、压暗、圆角裁剪和预判返回
+miuix-nav = { group = "top.yukonga.miuix.kmp", name = "miuix-nav", version.ref = "miuix" }
+# 运行时着色器：关于页的 OS3 动态渐变背景（AGSL，API 33+）
+miuix-shader = { group = "top.yukonga.miuix.kmp", name = "miuix-shader", version.ref = "miuix" }
+
+# 液态玻璃底栏的离屏采样与折射，纯 Android 工程由 Gradle 选 android 变体
+backdrop = { group = "io.github.kyant0", name = "backdrop", version.ref = "backdrop" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+# 注意：AGP 9 起不要再声明 org.jetbrains.kotlin.android，
+# 否则会报 "Cannot add extension with name 'kotlin'"（AGP 已内置注册）。
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

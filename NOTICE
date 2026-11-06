@@ -1,0 +1,22 @@
+dotExpc
+Copyright 2026 AmeXE2
+
+This product is licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at
+
+    https://www.apache.org/licenses/LICENSE-2.0
+
+This product includes software developed by the Android Open Source Project
+(https://source.android.com), licensed under the Apache License, Version 2.0.
+
+This product includes Kotlin and kotlinx.coroutines, developed by JetBrains
+(https://kotlinlang.org), licensed under the Apache License, Version 2.0.
+
+This product includes Miuix (https://github.com/compose-miuix-ui/miuix),
+Copyright 2026 compose-miuix-ui contributors, licensed under the Apache
+License, Version 2.0. Portions of the floating tab bar, drag animation, and
+about page background are adapted from the compose-miuix-ui example.
+
+This product includes AndroidLiquidGlass / backdrop
+(https://github.com/Kyant0/AndroidLiquidGlass), Copyright Kyant0, licensed
+under the Apache License, Version 2.0.

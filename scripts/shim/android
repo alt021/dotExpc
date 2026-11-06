@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+# =============================================================================
+# `android` CLI 包装脚本   (Git Bash / MSYS2 版)
+#
+# 为什么需要它：
+#   scripts/env.sh 里**不能**导出 ANDROID_USER_HOME（会和 ANDROID_PREFS_ROOT 打架，
+#   AGP 直接起不来，原因见 env.sh 中的长注释）。但 Android CLI 的启动器
+#   （cmdline-tools/latest/bin/android.exe，以及它下载到
+#   $ANDROID_USER_HOME/bin/ 的 android-cli.exe）却又**只认** ANDROID_USER_HOME，
+#   拿不到就会退回去找用户主目录，在 ~/.android 里重新自举一份 89 MB 的副本。
+#
+# 折中办法：只在调用这一个进程时把 ANDROID_USER_HOME 设上。
+# 本目录被 env.sh 放在 PATH 最前面，所以 `android` 会命中这里。
+# =============================================================================
+set -e
+
+_here=$(cd "$(dirname "$0")" && pwd)
+_root=$(cd "$_here/../.." && pwd)
+_tc="$_root/toolchain"
+
+if command -v cygpath >/dev/null 2>&1; then
+  ANDROID_USER_HOME=$(cygpath -w "$_tc/android-user")
+else
+  ANDROID_USER_HOME="$_tc/android-user"
+fi
+export ANDROID_USER_HOME
+
+exec "$_tc/android-sdk/cmdline-tools/latest/bin/android.exe" "$@"
