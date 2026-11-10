@@ -38,8 +38,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalDensity
@@ -57,16 +60,22 @@ import com.dotexpc.app.data.HitokotoStore
 import com.dotexpc.app.data.HomeBackground
 import com.dotexpc.app.data.PickupStore
 import com.dotexpc.app.data.Platform
+import com.dotexpc.app.ui.component.AppButton
+import com.dotexpc.app.ui.component.AppButtonKind
+import com.dotexpc.app.ui.component.AppCard
+import com.dotexpc.app.ui.component.AppDialog
 import com.dotexpc.app.ui.component.accent
+import com.dotexpc.app.ui.theme.EfType
+import com.dotexpc.app.ui.theme.LocalEfColors
+import com.dotexpc.app.ui.theme.LocalEndfield
 import java.util.Calendar
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.text.CharCategory
 import kotlinx.coroutines.delay
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /** 主页：顶部一言 + 待取数量，下方两个平台的绑定状态。 */
@@ -82,6 +91,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val colors = MiuixTheme.colorScheme
+    val endfield = LocalEndfield.current
     val clipboard = LocalClipboardManager.current
     var showQuote by remember { mutableStateOf(false) }
     // 打开主页时拉一次，之后每小时检查一遍；store 内部按天去重，同一天不会重复请求。
@@ -114,6 +124,8 @@ fun HomeScreen(
         when (settings.homeBackground) {
             HomeBackground.Blank -> Unit
             HomeBackground.Dots -> HomeDots(Modifier.fillMaxSize())
+            // 等高线要画到页面外才能铺满，这里裁回本页，否则会漏到隔壁取件码页。
+            HomeBackground.Contour -> HomeContour(Modifier.fillMaxSize().clipToBounds())
             HomeBackground.Gradient -> HomeGradient()
         }
 
@@ -135,6 +147,7 @@ fun HomeScreen(
                 ) {
                     val availableWidthPx = with(density) { maxWidth.toPx() }
                     val heroStyle = TextStyle(
+                        fontFamily = if (endfield) EfType.body else null,
                         fontSize = 34.sp,
                         lineHeight = 45.sp,
                         fontWeight = if (quote.isBlank()) FontWeight.SemiBold else FontWeight.Normal,
@@ -185,7 +198,7 @@ fun HomeScreen(
             Spacer(Modifier.height(116.dp))
         }
 
-        OverlayDialog(
+        AppDialog(
             show = showQuote,
             title = quote,
             onDismissRequest = { showQuote = false },
@@ -204,22 +217,20 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Button(
+                AppButton(
+                    label = "关闭",
                     onClick = { showQuote = false },
                     modifier = Modifier.weight(1f),
-                ) {
-                    Text(text = "关闭")
-                }
-                Button(
+                )
+                AppButton(
+                    label = "复制",
                     onClick = {
                         clipboard.setText(AnnotatedString(quote))
                         showQuote = false
                     },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColorsPrimary(),
-                ) {
-                    Text(text = "复制")
-                }
+                    kind = AppButtonKind.Primary,
+                )
             }
         }
     }
@@ -348,12 +359,18 @@ private fun measuredWidth(text: String, measurer: TextMeasurer, style: TextStyle
         softWrap = false,
     ).size.width.toFloat()
 
-/** 顶部静态渐变：Miuix 标准蓝极淡地铺在顶部，向下淡出，不做任何动画。 */
+/** 顶部静态渐变：主色极淡地铺在顶部，向下淡出，不做任何动画。终末地改用墨色，浓度更低。 */
 @Composable
 private fun HomeGradient(modifier: Modifier = Modifier) {
     val colors = MiuixTheme.colorScheme
     val dark = colors.background.luminance() < 0.5f
-    val top = colors.primary.copy(alpha = if (dark) 0.16f else 0.18f)
+    // 终末地主色就是墨色，按同样的方式铺一层，只是压到平面皮肤能接受的程度。
+    val alpha = when {
+        LocalEndfield.current -> if (dark) 0.08f else 0.06f
+        dark -> 0.16f
+        else -> 0.18f
+    }
+    val top = colors.primary.copy(alpha = alpha)
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -422,6 +439,65 @@ private fun HomeDots(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * 等高线：以一言所在位置为中心的一组闭合细线，半径按固定谐波起伏，
+ * 像一张没有标注的地形图。各环共用同一轮廓只按半径缩放，所以永远不会相交；
+ * 只画线、不填充、不做动画，每五条作为计曲线略重一些。
+ */
+@Composable
+private fun HomeContour(modifier: Modifier = Modifier) {
+    val colors = MiuixTheme.colorScheme
+    val endfield = LocalEndfield.current
+    val lineColor = if (endfield) LocalEfColors.current.rule else colors.onSurface
+    val lineAlpha = if (endfield) {
+        1f
+    } else {
+        // 线条比点阵更连续，透明度再压一档，避免抢过正文。
+        if (colors.background.luminance() < 0.5f) 0.09f else 0.11f
+    }
+    val fadeStrength = if (endfield) 0.35f else 0.55f
+    val statusBarTop = WindowInsets.statusBars.getTop(LocalDensity.current).toFloat()
+
+    Canvas(modifier = modifier) {
+        val stroke = 1.dp.toPx()
+        val spacing = 30.dp.toPx()
+        val origin = Offset(
+            x = 28.dp.toPx() + 76.dp.toPx(),
+            y = statusBarTop + (size.height - statusBarTop) * 0.2f + 30.dp.toPx(),
+        )
+        val reachX = maxOf(origin.x, size.width - origin.x)
+        val reachY = maxOf(origin.y, size.height - origin.y)
+        val rings = (sqrt(reachX * reachX + reachY * reachY) / spacing).toInt() + 1
+        val segments = 240
+        val path = Path()
+
+        for (index in 1..rings) {
+            val base = spacing * index
+            path.reset()
+            for (segment in 0..segments) {
+                val angle = segment * (2f * PI.toFloat() / segments)
+                val wobble = 1f +
+                    0.070f * sin(angle * 3f + 0.6f) +
+                    0.040f * sin(angle * 5f - 1.1f) +
+                    0.020f * sin(angle * 9f + 2.3f)
+                val radius = base * wobble
+                val x = origin.x + cos(angle) * radius
+                val y = origin.y + sin(angle) * radius
+                if (segment == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            path.close()
+            val indexLine = index % 5 == 0
+            // 越靠外的环越淡，边缘只留一点痕迹，不把整屏铺满。
+            val fade = 1f - fadeStrength * index / (rings + 1)
+            drawPath(
+                path = path,
+                color = lineColor.copy(alpha = lineAlpha * fade * if (indexLine) 1f else 0.7f),
+                style = Stroke(width = stroke),
+            )
+        }
+    }
+}
+
 @Composable
 private fun AccountStatusCard(
     platform: Platform,
@@ -431,8 +507,9 @@ private fun AccountStatusCard(
     onManage: () -> Unit,
 ) {
     val colors = MiuixTheme.colorScheme
+    val endfield = LocalEndfield.current
 
-    Card(
+    AppCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         cornerRadius = 18.dp,
@@ -444,9 +521,9 @@ private fun AccountStatusCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(platform.accent),
+                    .size(if (endfield) 7.dp else 8.dp)
+                    .then(if (endfield) Modifier else Modifier.clip(CircleShape))
+                    .background(if (endfield) LocalEfColors.current.signal else platform.accent),
             )
             Text(
                 text = platform.title,

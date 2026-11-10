@@ -97,13 +97,14 @@ import kotlin.math.sign
 
 enum class AppTab(
     val label: String,
+    val en: String,
     val filledIcon: ImageVector,
     val outlineIcon: ImageVector,
 ) {
-    HOME("主页", AppIcons.HomeFilled, AppIcons.HomeOutline),
-    PICKUP("取件码", AppIcons.PickupFilled, AppIcons.PickupOutline),
-    IDENTITY("身份码", AppIcons.IdentityFilled, AppIcons.IdentityOutline),
-    OPTIONS("选项", AppIcons.SettingsFilled, AppIcons.SettingsOutline),
+    HOME("主页", "HOME", AppIcons.HomeFilled, AppIcons.HomeOutline),
+    PICKUP("取件码", "PICKUPS", AppIcons.PickupFilled, AppIcons.PickupOutline),
+    IDENTITY("身份码", "IDENTITY", AppIcons.IdentityFilled, AppIcons.IdentityOutline),
+    OPTIONS("选项", "SETTINGS", AppIcons.SettingsFilled, AppIcons.SettingsOutline),
 }
 
 /**

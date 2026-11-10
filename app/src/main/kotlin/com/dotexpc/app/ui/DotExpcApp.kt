@@ -4,7 +4,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
@@ -37,6 +39,7 @@ import com.dotexpc.app.data.Platform
 import com.dotexpc.app.ui.about.AboutScreen
 import com.dotexpc.app.ui.about.LicensesScreen
 import com.dotexpc.app.ui.component.AppTab
+import com.dotexpc.app.ui.component.EndfieldTabBar
 import com.dotexpc.app.ui.component.FloatingTabBar
 import com.dotexpc.app.ui.component.floatingTabBarBottomPadding
 import com.dotexpc.app.ui.developer.DeveloperScreen
@@ -187,6 +190,8 @@ fun DotExpcApp(
             entry<Route.Developer>(swipeDismiss = swipeBack) {
                 DeveloperScreen(
                     onClose = { backStack.popTop() },
+                    endfieldTheme = settings.endfieldTheme,
+                    onToggleEndfieldTheme = { settings.toggleEndfieldTheme() },
                     onReopenTerms = {
                         settings.resetTerms()
                         showTerms = true
@@ -246,6 +251,9 @@ fun DotExpcApp(
 /** 底栏胶囊高度；加号悬在它上方 28dp。 */
 private val TabBarHeight = 64.dp
 
+/** 终末地底栏：52dp 格子 + 上下各 8dp。 */
+private val EndfieldTabBarHeight = 68.dp
+
 @Composable
 private fun MainScreen(
     sessions: AppSessions,
@@ -274,7 +282,8 @@ private fun MainScreen(
 
     // 液态玻璃底栏采样的是页面内容；旧系统没有 RenderEffect，退回普通胶囊。
     val backdrop = rememberLayerBackdrop()
-    val glassTabs = settings.liquidTabBar && isRenderEffectSupported()
+    // 终末地皮肤是平面细线风格，玻璃底栏会让整块发糊，直接关闭。
+    val glassTabs = settings.liquidTabBar && isRenderEffectSupported() && !settings.endfieldTheme
 
     // 根页按返回时先退回第一个标签。
     BackHandler(enabled = isTopLevel && pagerState.settledPage != 0) {
@@ -348,14 +357,22 @@ private fun MainScreen(
             }
         }
 
-        FloatingTabBar(
-            selected = selectedTab,
-            iconStyle = settings.tabIconStyle,
-            // 切页不做转场动画，直接跳到目标页。
-            onSelect = { target -> scope.launch { pagerState.scrollToPage(target.ordinal) } },
-            modifier = Modifier.align(Alignment.BottomCenter),
-            backdrop = if (glassTabs) backdrop else null,
-        )
+        if (settings.endfieldTheme) {
+            EndfieldTabBar(
+                selected = selectedTab,
+                onSelect = { target -> scope.launch { pagerState.scrollToPage(target.ordinal) } },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        } else {
+            FloatingTabBar(
+                selected = selectedTab,
+                iconStyle = settings.tabIconStyle,
+                // 切页不做转场动画，直接跳到目标页。
+                onSelect = { target -> scope.launch { pagerState.scrollToPage(target.ordinal) } },
+                modifier = Modifier.align(Alignment.BottomCenter),
+                backdrop = if (glassTabs) backdrop else null,
+            )
+        }
 
         // 加号只属于取件码页；与 KernelSU 的 FAB 一样悬在底栏上方。
         if (selectedTab == AppTab.PICKUP) {
@@ -375,7 +392,13 @@ private fun MainScreen(
                     .align(Alignment.BottomEnd)
                     .padding(
                         end = 20.dp,
-                        bottom = floatingTabBarBottomPadding() + TabBarHeight + 28.dp,
+                        bottom = if (settings.endfieldTheme) {
+                            // 终末地底栏贴底铺满，加号悬在它上沿再加 12dp。
+                            WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+                                EndfieldTabBarHeight + 12.dp
+                        } else {
+                            floatingTabBarBottomPadding() + TabBarHeight + 28.dp
+                        },
                     ),
             )
         }

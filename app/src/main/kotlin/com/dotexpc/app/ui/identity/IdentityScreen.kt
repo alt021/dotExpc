@@ -12,13 +12,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.dotexpc.app.data.AppSessions
 import com.dotexpc.app.data.Platform
+import com.dotexpc.app.ui.component.AppTopBar
 import com.dotexpc.app.ui.component.IdentityCard
+import com.dotexpc.app.ui.component.appScrollBehavior
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
-import top.yukonga.miuix.kmp.basic.TopAppBar
 
 /** 身份码页：每个平台一张可展开/收起的卡片。 */
 @Composable
@@ -36,15 +36,16 @@ fun IdentityScreen(
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
-        TopAppBar(
+        AppTopBar(
             title = "身份码",
+            en = "IDENTITY",
             scrollBehavior = scrollBehavior,
         )
 
         Column(
             modifier = Modifier
                 .weight(1f)
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .appScrollBehavior(scrollBehavior)
                 .verticalScroll(rememberScrollState())
                 .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),

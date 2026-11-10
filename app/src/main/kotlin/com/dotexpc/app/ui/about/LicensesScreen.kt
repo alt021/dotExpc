@@ -14,13 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.dotexpc.app.web.openExternalLink
+import com.dotexpc.app.ui.component.AppCard
 import com.dotexpc.app.ui.component.AppIcons
+import com.dotexpc.app.ui.component.AppSectionTitle
+import com.dotexpc.app.ui.component.AppTopBar
 import top.yukonga.miuix.kmp.basic.BasicComponent
-import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private const val PROJECT_URL = "https://github.com/alt021/dotExpc"
@@ -38,13 +37,10 @@ fun LicensesScreen(
             // 和设置页同一层：浅色淡灰、深色纯黑，卡片才浮得出来。
             .background(MiuixTheme.colorScheme.surface),
     ) {
-        TopAppBar(
+        AppTopBar(
             title = "开放源代码许可",
-            navigationIcon = {
-                IconButton(onClick = onClose) {
-                    Icon(imageVector = AppIcons.Back, contentDescription = "返回")
-                }
-            },
+            en = "LICENSES",
+            onBack = onClose,
         )
         Column(
             modifier = Modifier
@@ -54,8 +50,8 @@ fun LicensesScreen(
                 .navigationBarsPadding()
                 .padding(top = 8.dp, bottom = 24.dp),
         ) {
-            SmallTitle("当前项目")
-            Card(
+            AppSectionTitle("当前项目")
+            AppCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -71,8 +67,8 @@ fun LicensesScreen(
                     url = APACHE_LICENSE_URL,
                 )
             }
-            SmallTitle("开源组件")
-            Card(
+            AppSectionTitle("开源组件")
+            AppCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -82,6 +78,11 @@ fun LicensesScreen(
                 LicenseRow("kotlinx.coroutines", url = "https://github.com/Kotlin/kotlinx.coroutines")
                 LicenseRow("Miuix", url = "https://github.com/compose-miuix-ui/miuix")
                 LicenseRow("AndroidLiquidGlass", url = "https://github.com/Kyant0/AndroidLiquidGlass")
+                LicenseRow(
+                    title = "Saira",
+                    summary = "SIL Open Font License 1.1",
+                    url = "https://openfontlicense.org",
+                )
             }
         }
     }

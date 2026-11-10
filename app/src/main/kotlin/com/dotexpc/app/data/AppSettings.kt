@@ -24,10 +24,11 @@ enum class PddAccessMode(val label: String) {
     OfficialApp("打开官方应用"),
 }
 
-/** 主页背景：纯色空白、点阵图案，或顶部静态渐变。 */
+/** 主页背景：纯色空白、点阵图案、等高线，或顶部静态渐变。 */
 enum class HomeBackground(val label: String) {
     Blank("空白"),
     Dots("点阵"),
+    Contour("等高线"),
     Gradient("渐变"),
 }
 
@@ -63,6 +64,9 @@ class AppSettings(context: Context) {
         private set
 
     var hitokotoEnabled by mutableStateOf(prefs.getBoolean(KEY_HITOKOTO, false))
+        private set
+
+    var endfieldTheme by mutableStateOf(prefs.getBoolean(KEY_ENDFIELD, false))
         private set
 
     var pddLoginNoticeAccepted by mutableStateOf(prefs.getBoolean(KEY_PDD_NOTICE, false))
@@ -101,6 +105,11 @@ class AppSettings(context: Context) {
         prefs.edit().putBoolean(KEY_HITOKOTO, hitokotoEnabled).apply()
     }
 
+    fun toggleEndfieldTheme() {
+        endfieldTheme = !endfieldTheme
+        prefs.edit().putBoolean(KEY_ENDFIELD, endfieldTheme).apply()
+    }
+
     fun acceptTerms() {
         termsAccepted = true
         prefs.edit().putBoolean(KEY_TERMS, true).apply()
@@ -129,6 +138,7 @@ class AppSettings(context: Context) {
         const val KEY_PDD_ACCESS = "pdd_access_mode"
         const val KEY_HOME_BG = "home_background"
         const val KEY_HITOKOTO = "hitokoto_enabled"
+        const val KEY_ENDFIELD = "endfield_theme"
         const val KEY_PDD_NOTICE = "pdd_login_notice_accepted"
         const val KEY_TERMS = "terms_accepted"
     }

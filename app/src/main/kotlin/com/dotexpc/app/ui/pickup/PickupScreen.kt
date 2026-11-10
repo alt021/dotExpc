@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -41,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.state.ToggleableState
@@ -55,13 +56,21 @@ import com.dotexpc.app.data.PickupCode
 import com.dotexpc.app.data.PickupStore
 import com.dotexpc.app.data.Platform
 import kotlinx.coroutines.delay
+import com.dotexpc.app.ui.component.AppButton
+import com.dotexpc.app.ui.component.AppButtonKind
+import com.dotexpc.app.ui.component.AppBottomSheet
+import com.dotexpc.app.ui.component.AppCard
+import com.dotexpc.app.ui.component.AppCheckbox
+import com.dotexpc.app.ui.component.AppDialog
 import com.dotexpc.app.ui.component.AppIcons
+import com.dotexpc.app.ui.component.AppTextButton
+import com.dotexpc.app.ui.component.AppTopBar
 import com.dotexpc.app.ui.component.ClickAnchoredPositionProvider
+import com.dotexpc.app.ui.component.appScrollBehavior
 import com.dotexpc.app.ui.component.trackPressX
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card
-import top.yukonga.miuix.kmp.basic.Checkbox
+import com.dotexpc.app.ui.theme.Ef
+import com.dotexpc.app.ui.theme.LocalEfColors
+import com.dotexpc.app.ui.theme.LocalEndfield
 import top.yukonga.miuix.kmp.basic.DropdownArrowEndAction
 import top.yukonga.miuix.kmp.basic.DropdownImpl
 import top.yukonga.miuix.kmp.basic.Icon
@@ -69,11 +78,8 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.ListPopupColumn
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
-import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.overlay.OverlayBottomSheet
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
+import top.yukonga.miuix.kmp.basic.TextFieldDefaults
 import top.yukonga.miuix.kmp.overlay.OverlayListPopup
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -86,6 +92,8 @@ fun PickupScreen(
     modifier: Modifier = Modifier,
 ) {
     val colors = MiuixTheme.colorScheme
+    val endfield = LocalEndfield.current
+    val ef = LocalEfColors.current
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val scrollBehavior = MiuixScrollBehavior()
@@ -169,8 +177,9 @@ fun PickupScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            TopAppBar(
+            AppTopBar(
                 title = "取件码",
+                en = "PICKUPS",
                 scrollBehavior = scrollBehavior,
             )
 
@@ -194,7 +203,7 @@ fun PickupScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .nestedScroll(scrollBehavior.nestedScrollConnection),
+                        .appScrollBehavior(scrollBehavior),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 200.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
@@ -236,7 +245,7 @@ fun PickupScreen(
         }
     }
 
-    OverlayBottomSheet(
+    AppBottomSheet(
         show = showEditor,
         title = if (editing != null) "编辑取件码" else "添加取件码",
         onDismissRequest = { closeEditor() },
@@ -259,17 +268,24 @@ fun PickupScreen(
                 },
                 label = "取件码，如 8-3-2048",
                 singleLine = true,
+                cornerRadius = if (endfield) 0.dp else TextFieldDefaults.CornerRadius,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             )
 
             // 下拉锚点必须和弹层在同一个布局节点里，否则菜单会从别处弹出。
             Box {
+                val platformShape = if (endfield) {
+                    CutCornerShape(bottomEnd = Ef.cutButton)
+                } else {
+                    RoundedCornerShape(16.dp)
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .trackPressX(platformTapX)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(colors.secondaryContainer)
+                        .clip(platformShape)
+                        .then(if (endfield) Modifier.border(Ef.hairline, ef.rule, platformShape) else Modifier)
+                        .background(if (endfield) ef.panel else colors.secondaryContainer)
                         .clickable { showPlatformMenu = true }
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -313,6 +329,7 @@ fun PickupScreen(
                 },
                 label = "备注（选填，$NOTE_LIMIT 字以内）",
                 singleLine = true,
+                cornerRadius = if (endfield) 0.dp else TextFieldDefaults.CornerRadius,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { save() }),
             )
@@ -326,23 +343,23 @@ fun PickupScreen(
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                TextButton(
-                    text = "取消",
+                // 与右侧主操作同一种按钮，两个键的尺寸才会一致。
+                AppButton(
+                    label = "取消",
                     onClick = { closeEditor() },
                     modifier = Modifier.weight(1f),
                 )
-                Button(
+                AppButton(
+                    label = if (editing != null) "保存" else "添加",
                     onClick = { save() },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColorsPrimary(),
-                ) {
-                    Text(text = if (editing != null) "保存" else "添加")
-                }
+                    kind = AppButtonKind.Primary,
+                )
             }
         }
     }
 
-    OverlayDialog(
+    AppDialog(
         show = pendingDelete != null,
         title = "删除取件码",
         summary = pendingDelete?.code,
@@ -361,7 +378,7 @@ fun PickupScreen(
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Checkbox(
+                AppCheckbox(
                     state = if (rememberSkipDelete) ToggleableState.On else ToggleableState.Off,
                     onClick = { rememberSkipDelete = !rememberSkipDelete },
                 )
@@ -379,21 +396,17 @@ fun PickupScreen(
                     .padding(top = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                TextButton(
-                    text = "取消",
+                AppTextButton(
+                    label = "取消",
                     onClick = { pendingDelete = null },
                     modifier = Modifier.weight(1f),
                 )
-                Button(
+                AppButton(
+                    label = "删除",
                     onClick = { confirmDelete() },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        color = colors.error,
-                        contentColor = colors.onError,
-                    ),
-                ) {
-                    Text(text = "删除")
-                }
+                    kind = AppButtonKind.Danger,
+                )
             }
         }
     }
@@ -436,7 +449,7 @@ private fun PickupRow(
     val colors = MiuixTheme.colorScheme
     val actionTint = colors.onSurface.copy(alpha = 0.65f)
 
-    Card(
+    AppCard(
         onClick = onCopy,
         modifier = Modifier.fillMaxWidth(),
         cornerRadius = 18.dp,

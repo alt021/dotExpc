@@ -11,12 +11,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dotexpc.app.ui.component.AppButton
+import com.dotexpc.app.ui.component.AppButtonKind
+import com.dotexpc.app.ui.component.AppDialog
+import com.dotexpc.app.ui.component.AppTextButton
 import kotlinx.coroutines.delay
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 private const val COUNTDOWN_SECONDS = 5
 
@@ -37,7 +36,7 @@ fun PddLoginNoticeDialog(
         }
     }
 
-    OverlayDialog(
+    AppDialog(
         show = show,
         title = "登录提示",
         summary = "受拼多多限制，同一账号仅可同时登录一台设备。若遇到顶号问题，请使用“打开官方应用”模式",
@@ -47,21 +46,18 @@ fun PddLoginNoticeDialog(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            TextButton(
-                text = "取消",
+            AppTextButton(
+                label = "取消",
                 onClick = onCancel,
                 modifier = Modifier.weight(1f),
             )
-            Button(
+            AppButton(
+                label = if (remaining > 0) "继续（${remaining}s）" else "继续",
                 onClick = onContinue,
                 enabled = remaining <= 0,
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColorsPrimary(),
-            ) {
-                Text(
-                    text = if (remaining > 0) "继续（${remaining}s）" else "继续",
-                )
-            }
+                kind = AppButtonKind.Primary,
+            )
         }
     }
 }

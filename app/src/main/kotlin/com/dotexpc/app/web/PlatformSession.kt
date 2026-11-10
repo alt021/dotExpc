@@ -126,8 +126,17 @@ class PlatformSession(
         web?.clearCache(true)
     }
 
+    /**
+     * 立即把 Cookie 写入磁盘。Cookie 库默认延迟落盘，登录刚写入的会话 Cookie
+     * 如果在下一次提交前进程被回收，整段登录态就会丢失。
+     */
+    fun persistCookies() {
+        CookieManager.getInstance().flush()
+    }
+
     fun destroy() {
         main.removeCallbacks(mergeTick)
+        persistCookies()
         web?.let { view ->
             (view.parent as? ViewGroup)?.removeView(view)
             view.destroy()
@@ -246,7 +255,13 @@ class PlatformSession(
                     phase = data.optString("phase", "loading"),
                 )
             }.getOrNull() ?: return
-            main.post { state = next }
+            main.post {
+                val previous = state
+                state = next
+                // 登录态一变就落盘：登录页刚写入的 Cookie 还没被 Cookie 库提交，
+                // 等下一次自动提交前进程若被回收，用户就要重新登录。
+                if (next.bound != previous.bound || next.phase != previous.phase) persistCookies()
+            }
         }
     }
 
@@ -415,6 +430,7 @@ class PlatformSession(
             detail: android.webkit.RenderProcessGoneDetail,
         ): Boolean {
             if (web === view) {
+                persistCookies()
                 (view.parent as? ViewGroup)?.removeView(view)
                 view.destroy()
                 web = null

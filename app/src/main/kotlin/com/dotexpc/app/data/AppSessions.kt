@@ -62,6 +62,11 @@ class AppSessions(context: Context) {
         }
     }
 
+    /** 退到后台时把登录 Cookie 落盘，进程随后被系统回收也不丢登录态。 */
+    fun persistCookies() {
+        io.launch { all.forEach { it.persistCookies() } }
+    }
+
     /** 清掉 WebView 的资源缓存和临时文件；登录态不动。 */
     suspend fun clearCaches() {
         withContext(Dispatchers.Main) { all.forEach { it.clearWebViewCache() } }

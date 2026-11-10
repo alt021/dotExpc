@@ -11,11 +11,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.dotexpc.app.ui.component.AppButton
+import com.dotexpc.app.ui.component.AppButtonKind
+import com.dotexpc.app.ui.component.AppDialog
 import kotlinx.coroutines.delay
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private const val COUNTDOWN_SECONDS = 10
@@ -45,7 +45,7 @@ fun FirstRunTermsDialog(
         }
     }
 
-    OverlayDialog(
+    AppDialog(
         show = show,
         title = "使用须知",
         // 只能通过「同意并继续」关闭：点外部和返回键都不生效。
@@ -65,16 +65,13 @@ fun FirstRunTermsDialog(
                     )
                 }
             }
-            Button(
+            AppButton(
+                label = if (remaining > 0) "同意并继续（${remaining}s）" else "同意并继续",
                 onClick = onAccept,
                 enabled = remaining <= 0,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColorsPrimary(),
-            ) {
-                Text(
-                    text = if (remaining > 0) "同意并继续（${remaining}s）" else "同意并继续",
-                )
-            }
+                kind = AppButtonKind.Primary,
+            )
         },
     )
 }

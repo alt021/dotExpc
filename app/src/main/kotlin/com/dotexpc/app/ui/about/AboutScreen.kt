@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,16 +29,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.ui.text.TextStyle
+import com.dotexpc.app.R
 import com.dotexpc.app.web.openExternalLink
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
@@ -49,7 +52,12 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.isRenderEffectSupported
 import com.kyant.backdrop.shadow.Shadow as GlassShadow
 import kotlinx.coroutines.launch
+import com.dotexpc.app.ui.component.AppButton
+import com.dotexpc.app.ui.component.AppButtonKind
 import com.dotexpc.app.ui.component.AppIcons
+import com.dotexpc.app.ui.theme.EfType
+import com.dotexpc.app.ui.theme.LocalEfColors
+import com.dotexpc.app.ui.theme.LocalEndfield
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
@@ -68,13 +76,9 @@ fun AboutScreen(
     val versionName = remember(context) {
         context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: ""
     }
-    val appIcon = remember(context) {
-        runCatching {
-            context.packageManager.getApplicationIcon(context.packageName).toBitmap()
-        }.getOrNull()
-    }
     val backdrop = rememberLayerBackdrop()
     val blurEnabled = remember { isRenderEffectSupported() }
+    val endfield = LocalEndfield.current
 
     // 连点署名 5 次进开发者选项；间隔超过 2 秒重新计数，过程中不给任何反馈。
     var tapCount by remember { mutableIntStateOf(0) }
@@ -90,24 +94,19 @@ fun AboutScreen(
                 modifier = Modifier.align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                if (appIcon != null) {
-                    Image(
-                        bitmap = appIcon.asImageBitmap(),
-                        contentDescription = null,
-                        modifier = Modifier.size(88.dp),
-                    )
-                }
+                AppIcon()
                 Text(
                     text = "dotExpc",
                     modifier = Modifier.padding(top = 14.dp, bottom = 4.dp),
                     color = MiuixTheme.colorScheme.onBackground,
+                    fontFamily = if (endfield) EfType.label else null,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = "v$versionName",
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                    fontSize = 14.sp,
+                    style = if (endfield) EfType.Field.copy(fontSize = 14.sp) else TextStyle(fontSize = 14.sp),
                 )
             }
 
@@ -118,17 +117,25 @@ fun AboutScreen(
                     .padding(bottom = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                LiquidButton(
-                    backdrop = backdrop,
-                    blurEnabled = blurEnabled,
-                    onClick = { openExternalLink(context, RELEASES_URL) },
-                ) {
-                    Text(
-                        text = "检查更新",
-                        color = MiuixTheme.colorScheme.onBackground,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
+                if (endfield) {
+                    AppButton(
+                        label = "检查更新",
+                        onClick = { openExternalLink(context, RELEASES_URL) },
+                        kind = AppButtonKind.Primary,
                     )
+                } else {
+                    LiquidButton(
+                        backdrop = backdrop,
+                        blurEnabled = blurEnabled,
+                        onClick = { openExternalLink(context, RELEASES_URL) },
+                    ) {
+                        Text(
+                            text = "检查更新",
+                            color = MiuixTheme.colorScheme.onBackground,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
                 }
                 Text(
                     text = "Produced by AmeXE2",
@@ -147,7 +154,7 @@ fun AboutScreen(
                             }
                         },
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                    fontSize = 16.sp,
+                    style = if (endfield) EfType.Field.copy(fontSize = 14.sp) else TextStyle(fontSize = 16.sp),
                 )
             }
 
@@ -165,6 +172,33 @@ fun AboutScreen(
                 )
             }
         }
+    }
+}
+
+/**
+ * 关于页图标用主题色现画，而不是读启动器位图：默认主题跟随主色，
+ * 终末地用信号黄配黑盒子，与当前外观始终一致。
+ */
+@Composable
+private fun AppIcon(modifier: Modifier = Modifier) {
+    val endfield = LocalEndfield.current
+    val ef = LocalEfColors.current
+    val colors = MiuixTheme.colorScheme
+    Box(
+        modifier = modifier
+            .size(88.dp)
+            .background(
+                color = if (endfield) ef.signal else colors.primary,
+                shape = RoundedCornerShape(20.dp),
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            colorFilter = ColorFilter.tint(if (endfield) ef.onSignal else colors.onPrimary),
+        )
     }
 }
 

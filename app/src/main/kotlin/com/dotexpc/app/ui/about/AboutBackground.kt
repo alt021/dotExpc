@@ -28,6 +28,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import com.dotexpc.app.ui.theme.LocalEfColors
+import com.dotexpc.app.ui.theme.LocalEndfield
 import top.yukonga.miuix.kmp.shader.RuntimeShader
 import top.yukonga.miuix.kmp.shader.asBrush
 import top.yukonga.miuix.kmp.shader.isRuntimeShaderSupported
@@ -50,6 +52,14 @@ internal fun DynamicGradientBackground(
     val colors = MiuixTheme.colorScheme
     val isDark = colors.background.luminance() < 0.5f
     val record = if (backdrop != null) Modifier.layerBackdrop(backdrop) else Modifier
+
+    // 终末地皮肤不用装饰性渐变：纸色铺底，其余交给排版和细线。
+    if (LocalEndfield.current) {
+        Box(modifier = modifier.background(LocalEfColors.current.paper)) {
+            content()
+        }
+        return
+    }
 
     if (!remember { isRuntimeShaderSupported() }) {
         Box(modifier = modifier) {

@@ -8,13 +8,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.dotexpc.app.data.Platform
-import com.dotexpc.app.ui.component.AppIcons
+import com.dotexpc.app.ui.component.AppTextButton
+import com.dotexpc.app.ui.component.AppTopBar
 import com.dotexpc.app.ui.component.SessionWeb
 import com.dotexpc.app.web.PlatformSession
-import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -33,19 +30,13 @@ fun LoginScreen(
             .fillMaxSize()
             .background(MiuixTheme.colorScheme.background),
     ) {
-        TopAppBar(
+        AppTopBar(
             title = "登录${platform.title}",
+            en = "LOGIN",
             subtitle = "登录在官方页面内完成，应用不保存账号或密码",
-            navigationIcon = {
-                IconButton(onClick = onClose) {
-                    Icon(
-                        imageVector = AppIcons.Back,
-                        contentDescription = "返回",
-                    )
-                }
-            },
+            onBack = onClose,
             actions = {
-                TextButton(text = "完成", onClick = onClose)
+                AppTextButton(label = "完成", onClick = onClose)
             },
         )
         SessionWeb(

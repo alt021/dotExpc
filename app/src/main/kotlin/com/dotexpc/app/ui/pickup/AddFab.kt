@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +44,9 @@ import top.yukonga.miuix.kmp.basic.FloatingActionButton
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import com.dotexpc.app.ui.component.AppIcons
+import com.dotexpc.app.ui.theme.Ef
+import com.dotexpc.app.ui.theme.LocalEfColors
+import com.dotexpc.app.ui.theme.LocalEndfield
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val MenuWidth = 200.dp
@@ -76,6 +80,9 @@ fun AddFabMenu(
     modifier: Modifier = Modifier,
 ) {
     val colors = MiuixTheme.colorScheme
+    val endfield = LocalEndfield.current
+    val ef = LocalEfColors.current
+    val fabShape = if (endfield) CutCornerShape(bottomEnd = Ef.cutButton) else CircleShape
     // 展开后加号转 45° 变成 X。
     val iconRotation by animateFloatAsState(
         targetValue = if (expanded) 45f else 0f,
@@ -109,18 +116,25 @@ fun AddFabMenu(
         ) {
             // 间距放进动画内容里：收起过程中菜单不会先下移 10dp 再消失。
             Column(modifier = Modifier.padding(bottom = MenuGap)) {
-                val menuShape = RoundedCornerShape(MenuCornerRadius)
+                // 终末地皮肤里菜单是直角面板 + 细线框，投影换成轮廓线。
+                val menuShape = if (endfield) CutCornerShape(bottomEnd = Ef.cutPanel) else RoundedCornerShape(MenuCornerRadius)
                 Box(
                     modifier = Modifier
                         .width(MenuWidth)
-                        .shadow(
-                            elevation = 16.dp,
-                            shape = menuShape,
-                            ambientColor = Color.Black.copy(alpha = 0.28f),
-                            spotColor = Color.Black.copy(alpha = 0.32f),
+                        .then(
+                            if (endfield) {
+                                Modifier.border(Ef.hairline, ef.rule, menuShape)
+                            } else {
+                                Modifier.shadow(
+                                    elevation = 16.dp,
+                                    shape = menuShape,
+                                    ambientColor = Color.Black.copy(alpha = 0.28f),
+                                    spotColor = Color.Black.copy(alpha = 0.32f),
+                                )
+                            },
                         )
                         .clip(menuShape)
-                        .background(colors.surfaceContainer),
+                        .background(if (endfield) ef.panel else colors.surfaceContainer),
                 ) {
                     Column {
                         actions.forEachIndexed { index, (label, action) ->
@@ -142,13 +156,19 @@ fun AddFabMenu(
 
         FloatingActionButton(
             onClick = { onExpandedChange(!expanded) },
-            modifier = Modifier.border(0.05.dp, colors.outline.copy(alpha = 0.5f), CircleShape),
+            modifier = Modifier.border(
+                width = if (endfield) Ef.hairline else 0.05.dp,
+                color = if (endfield) ef.rule else colors.outline.copy(alpha = 0.5f),
+                shape = fabShape,
+            ),
+            shape = fabShape,
+            containerColor = if (endfield) ef.signal else colors.primary,
             shadowElevation = 0.dp,
         ) {
             Icon(
                 imageVector = AppIcons.Add,
                 contentDescription = if (expanded) "关闭" else "添加取件码",
-                tint = colors.onPrimary,
+                tint = if (endfield) ef.onSignal else colors.onPrimary,
                 modifier = Modifier
                     .size(32.dp)
                     .graphicsLayer { rotationZ = iconRotation },

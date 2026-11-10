@@ -21,9 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.dotexpc.app.data.AppSessions
@@ -35,27 +33,27 @@ import com.dotexpc.app.data.PddAccessMode
 import com.dotexpc.app.data.Platform
 import com.dotexpc.app.data.TabIconStyle
 import com.dotexpc.app.data.ThemeMode
+import com.dotexpc.app.ui.component.AppButton
+import com.dotexpc.app.ui.component.AppButtonKind
+import com.dotexpc.app.ui.component.AppCard
+import com.dotexpc.app.ui.component.AppDialog
 import com.dotexpc.app.ui.component.AppIcons
+import com.dotexpc.app.ui.component.AppSectionTitle
+import com.dotexpc.app.ui.component.AppSwitch
+import com.dotexpc.app.ui.component.AppTextButton
+import com.dotexpc.app.ui.component.AppTopBar
 import com.dotexpc.app.ui.component.ClickAnchoredPositionProvider
+import com.dotexpc.app.ui.component.appScrollBehavior
 import com.dotexpc.app.ui.component.trackPressX
 import top.yukonga.miuix.kmp.basic.BasicComponent
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.DropdownImpl
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.ListPopupColumn
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
-import top.yukonga.miuix.kmp.basic.SmallTitle
-import top.yukonga.miuix.kmp.basic.Switch
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.basic.TopAppBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.overlay.OverlayListPopup
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -72,7 +70,6 @@ fun OptionsScreen(
     scrollBehavior: ScrollBehavior,
     modifier: Modifier = Modifier,
 ) {
-    val colors = MiuixTheme.colorScheme
     var showThemeMenu by remember { mutableStateOf(false) }
     var showIconMenu by remember { mutableStateOf(false) }
     var showBackgroundMenu by remember { mutableStateOf(false) }
@@ -89,6 +86,7 @@ fun OptionsScreen(
     val backgroundAnchor = remember { ClickAnchoredPositionProvider(backgroundTapX) }
     val pddAnchor = remember { ClickAnchoredPositionProvider(pddTapX) }
     val pddInAppLogin = settings.pddAccessMode == PddAccessMode.InApp
+    val glassLocked = settings.endfieldTheme
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var cacheSize by remember { mutableStateOf<Long?>(null) }
@@ -98,18 +96,22 @@ fun OptionsScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        TopAppBar(title = "选项", scrollBehavior = scrollBehavior)
+        AppTopBar(
+            title = "选项",
+            en = "SETTINGS",
+            scrollBehavior = scrollBehavior,
+        )
 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .appScrollBehavior(scrollBehavior)
                 .verticalScroll(scrollState)
                 .padding(top = 8.dp, bottom = 100.dp),
         ) {
-            SmallTitle("账户")
-            Card(
+            AppSectionTitle("账户")
+            AppCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -176,8 +178,8 @@ fun OptionsScreen(
                 }
             }
 
-            SmallTitle("外观")
-            Card(
+            AppSectionTitle("外观")
+            AppCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -312,7 +314,7 @@ fun OptionsScreen(
                                     tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                                 )
                             }
-                            Switch(
+                            AppSwitch(
                                 checked = settings.hitokotoEnabled,
                                 onCheckedChange = { settings.toggleHitokoto() },
                             )
@@ -323,20 +325,26 @@ fun OptionsScreen(
 
                 OptionRow(
                     title = "液态玻璃底栏",
-                    summary = "启用类似 iOS 的液态玻璃底栏",
+                    summary = if (glassLocked) {
+                        "无法与终末地主题同时使用"
+                    } else {
+                        "启用类似 iOS 的液态玻璃底栏"
+                    },
                     icon = AppIcons.LiquidGlass,
                     trailing = {
-                        Switch(
-                            checked = settings.liquidTabBar,
+                        // 终末地底栏是平面细线风格，玻璃会把它糊掉：只把开关置灰。
+                        AppSwitch(
+                            checked = settings.liquidTabBar && !glassLocked,
                             onCheckedChange = { settings.toggleLiquidTabBar() },
+                            enabled = !glassLocked,
                         )
                     },
-                    onClick = { settings.toggleLiquidTabBar() },
+                    onClick = if (glassLocked) null else ({ settings.toggleLiquidTabBar() }),
                 )
             }
 
-            SmallTitle("存储")
-            Card(
+            AppSectionTitle("存储")
+            AppCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -358,8 +366,8 @@ fun OptionsScreen(
                 )
             }
 
-            SmallTitle("关于")
-            Card(
+            AppSectionTitle("关于")
+            AppCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -381,7 +389,7 @@ fun OptionsScreen(
             }
         }
 
-        OverlayDialog(
+        AppDialog(
             show = showUnbind,
             title = "解除${unbindTarget?.title ?: ""}绑定？",
             summary = "将清除本机保存的登录状态，之后需要重新登录官方页面才能显示身份码。",
@@ -391,28 +399,24 @@ fun OptionsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                TextButton(
-                    text = "取消",
+                AppTextButton(
+                    label = "取消",
                     onClick = { showUnbind = false },
                     modifier = Modifier.weight(1f),
                 )
-                Button(
+                AppButton(
+                    label = "解除绑定",
                     onClick = {
                         unbindTarget?.let { sessions.get(it).unbind() }
                         showUnbind = false
                     },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        color = colors.error,
-                        contentColor = Color.White,
-                    ),
-                ) {
-                    Text(text = "解除绑定")
-                }
+                    kind = AppButtonKind.Danger,
+                )
             }
         }
 
-        OverlayDialog(
+        AppDialog(
             show = showRefreshHitokoto,
             title = "刷新一言",
             summary = "为避免请求过多，请慎用刷新功能",
@@ -422,22 +426,20 @@ fun OptionsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Button(
+                AppButton(
+                    label = "取消",
                     onClick = { showRefreshHitokoto = false },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColorsPrimary(),
-                ) {
-                    Text(text = "取消")
-                }
-                Button(
+                    kind = AppButtonKind.Primary,
+                )
+                AppButton(
+                    label = "刷新",
                     onClick = {
                         showRefreshHitokoto = false
                         scope.launch { hitokoto.refreshNow() }
                     },
                     modifier = Modifier.weight(1f),
-                ) {
-                    Text(text = "刷新")
-                }
+                )
             }
         }
     }
@@ -481,22 +483,15 @@ private fun AccountRow(
                     }
                 }
                 if (inAppLogin) {
-                    TextButton(
-                        text = if (bound) "解绑" else "绑定",
+                    AppTextButton(
+                        label = if (bound) "解绑" else "绑定",
                         onClick = if (bound) onUnbind else onBind,
+                        kind = if (bound) AppButtonKind.Danger else AppButtonKind.Primary,
                         minWidth = 0.dp,
                         minHeight = 32.dp,
                         cornerRadius = 16.dp,
                         insideMargin = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         textStyle = MiuixTheme.textStyles.body2,
-                        colors = if (bound) {
-                            ButtonDefaults.textButtonColors(
-                                color = MiuixTheme.colorScheme.error,
-                                textColor = Color.White,
-                            )
-                        } else {
-                            ButtonDefaults.textButtonColorsPrimary()
-                        },
                     )
                 }
             }

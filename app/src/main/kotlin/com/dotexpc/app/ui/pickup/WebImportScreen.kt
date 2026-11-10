@@ -34,19 +34,15 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.doOnLayout
 import com.dotexpc.app.data.PickupStore
 import com.dotexpc.app.data.Platform
-import com.dotexpc.app.ui.component.AppIcons
+import com.dotexpc.app.ui.component.AppButton
+import com.dotexpc.app.ui.component.AppDialog
+import com.dotexpc.app.ui.component.AppTextButton
+import com.dotexpc.app.ui.component.AppTopBar
 import com.dotexpc.app.ui.component.SessionWeb
 import com.dotexpc.app.web.PlatformSession
 import com.dotexpc.app.web.UrlPolicy
 import org.json.JSONTokener
 import java.util.Locale
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -235,19 +231,13 @@ fun WebImportScreen(
             .fillMaxSize()
             .background(colors.background),
     ) {
-        TopAppBar(
+        AppTopBar(
             title = title,
-            navigationIcon = {
-                // 站内跳转（如搜索、身份码）是同窗口打开的，先退历史再退出页面。
-                IconButton(onClick = { goBack() }) {
-                    Icon(
-                        imageVector = AppIcons.Back,
-                        contentDescription = "返回",
-                    )
-                }
-            },
+            en = "IMPORT",
+            // 站内跳转（如搜索、身份码）是同窗口打开的，先退历史再退出页面。
+            onBack = { goBack() },
             actions = {
-                TextButton(text = "导入", onClick = { importFromPage() })
+                AppTextButton(label = "导入", onClick = { importFromPage() })
             },
         )
         if (shared != null) {
@@ -288,18 +278,17 @@ fun WebImportScreen(
     }
 
     // 导入成功后停在页面上提示结果，确认（或点空白收起）再退回取件码页。
-    OverlayDialog(
+    AppDialog(
         show = showImported,
         title = "导入完成",
         summary = "已导入 $importedCount 个取件码至${platform.title}",
         onDismissRequest = { onClose() },
     ) {
-        Button(
+        AppButton(
+            label = "好的",
             onClick = { onClose() },
             modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(text = "好的")
-        }
+        )
     }
 }
 

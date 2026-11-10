@@ -24,15 +24,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dotexpc.app.data.Platform
+import com.dotexpc.app.ui.theme.LocalEndfield
 import com.dotexpc.app.web.PlatformSession
 import com.dotexpc.app.web.openPddIdentity
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
-import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
@@ -59,8 +60,9 @@ fun IdentityCard(
     val state = session.state
     val colors = MiuixTheme.colorScheme
     val context = LocalContext.current
+    val endfield = LocalEndfield.current
 
-    Card(
+    AppCard(
         modifier = modifier.fillMaxWidth(),
         cornerRadius = 22.dp,
         insideMargin = PaddingValues(0.dp),
@@ -124,7 +126,7 @@ fun IdentityCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(ContentHeight)
-                        .clip(ContentShape)
+                        .clip(if (endfield) RectangleShape else ContentShape)
                         .background(Color.White),
                 ) {
                     if (officialApp) {
@@ -134,14 +136,21 @@ fun IdentityCard(
                                 .padding(24.dp),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Button(
-                                onClick = { openPddIdentity(context) },
-                                colors = ButtonDefaults.buttonColors(
-                                    color = Color(0xFFF0F0F0),
-                                    contentColor = Color(0xFF666666),
-                                ),
-                            ) {
-                                Text(text = "点此前往拼多多")
+                            if (endfield) {
+                                AppButton(
+                                    label = "点此前往拼多多",
+                                    onClick = { openPddIdentity(context) },
+                                )
+                            } else {
+                                Button(
+                                    onClick = { openPddIdentity(context) },
+                                    colors = ButtonDefaults.buttonColors(
+                                        color = Color(0xFFF0F0F0),
+                                        contentColor = Color(0xFF666666),
+                                    ),
+                                ) {
+                                    Text(text = "点此前往拼多多")
+                                }
                             }
                         }
                     } else {
@@ -207,8 +216,6 @@ private fun CardCover(
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(16.dp))
-        Button(onClick = onAction) {
-            Text(text = action)
-        }
+        AppButton(label = action, onClick = onAction)
     }
 }
